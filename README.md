@@ -4,9 +4,7 @@ A hands-on AWS project demonstrating a secure, scalable, and monitored 3-tier cl
 
 ## Architecture
 
-![AWS 3-Tier Architecture](architecture/Architecture.png)
-
-### Request Flow
+The architecture follows this request flow:
 
 ```text
 User / Internet
@@ -91,7 +89,7 @@ Used by the RDS DB subnet group.
 ## AWS Services Used
 
 - Amazon VPC
-- EC2
+- Amazon EC2
 - Application Load Balancer
 - Target Groups
 - Auto Scaling
@@ -169,11 +167,7 @@ The ALB forwards traffic to:
 app-target-group
 ```
 
-Only healthy targets receive traffic.
-
-### Healthy Targets
-
-![Healthy Targets](screenshots/alb/healthy-targets.png)
+Only healthy targets receive application traffic.
 
 ---
 
@@ -197,15 +191,7 @@ Average CPU Target: 50%
 
 CPU load was generated using `stress-ng` to test automatic scaling.
 
-The Auto Scaling Group successfully increased capacity when CPU utilization increased.
-
-### Scaling Policy
-
-![Scaling Policy](screenshots/asg/scaling-policy.png)
-
-### Scaling Activity
-
-![Auto Scaling Activity](screenshots/asg/scaling-activity.png)
+The Auto Scaling Group successfully increased capacity when CPU utilization increased and scaled the application tier according to demand.
 
 ---
 
@@ -238,11 +224,7 @@ TCP 3306
 
 Connectivity was successfully tested from a private EC2 instance.
 
-A test database and table were also created to verify read/write access.
-
-### RDS Connectivity
-
-![RDS Connectivity](screenshots/rds/rds-connectivity.png)
+A test database and table were created to verify read and write access.
 
 ---
 
@@ -257,7 +239,7 @@ This allows administrative access without exposing:
 ```text
 Port 22
 Public EC2 IP addresses
-SSH keys over the network
+Direct SSH access
 ```
 
 ---
@@ -273,11 +255,12 @@ Nginx logs are automatically sent to:
 /cloud-project/nginx/error
 ```
 
-CloudWatch also monitors EC2 CPU utilization and Auto Scaling metrics.
+CloudWatch also monitors:
 
-### CloudWatch Logs
-
-![CloudWatch Logs](screenshots/cloudwatch/nginx-logs.png)
+- EC2 CPU utilization
+- Auto Scaling activity
+- ALB target health
+- Application logs
 
 ---
 
@@ -302,36 +285,77 @@ SNS Topic
 Email Notification
 ```
 
-### Monitoring Alarm
-
-![CloudWatch Alarm](screenshots/cloudwatch/alarm.png)
+This provides automated alerting when application targets become unhealthy.
 
 ---
 
-## VPC and Subnets
+## NAT Gateway
 
-The architecture uses separate public, application, and database subnets to provide network isolation.
+The EC2 instances are deployed in private subnets and do not have direct internet access.
 
-### Subnet Configuration
+Outbound internet traffic follows:
 
-![VPC Subnets](screenshots/vpc/subnets.png)
+```text
+Private EC2
+    |
+    v
+Private Route Table
+    |
+    v
+NAT Gateway
+    |
+    v
+Internet Gateway
+    |
+    v
+Internet
+```
+
+This allows private instances to download packages and updates without exposing them directly to the internet.
+
+---
+
+## High Availability
+
+The application architecture spans two Availability Zones.
+
+```text
+Availability Zone 1        Availability Zone 2
+
+Public Subnet              Public Subnet
+      \                       /
+       \                     /
+        Application Load Balancer
+                   |
+             Target Group
+             /          \
+            /            \
+Private App Subnet    Private App Subnet
+      |                     |
+     EC2                   EC2
+        \                  /
+         \                /
+             RDS MySQL
+```
+
+The Application Load Balancer distributes requests across healthy instances, while Auto Scaling automatically replaces or adds instances when required.
 
 ---
 
 ## Key Features
 
-- Custom VPC design
-- Multi-AZ application architecture
+- Custom VPC architecture
+- Multi-AZ deployment
 - Public and private subnet isolation
 - Application Load Balancing
 - CPU-based Auto Scaling
 - Private EC2 instances
-- Private RDS MySQL database
-- NAT Gateway for outbound private-subnet internet access
+- Private Amazon RDS MySQL
+- NAT Gateway for outbound access
 - Security-group chaining
-- Automated EC2 configuration using Launch Templates
+- Automated EC2 provisioning
 - Systems Manager Session Manager
-- Centralized Nginx logging
+- Centralized CloudWatch logging
 - CloudWatch monitoring
 - SNS email alerts
 
@@ -341,19 +365,22 @@ The architecture uses separate public, application, and database subnets to prov
 
 This project provided hands-on experience with:
 
-- Designing AWS network architecture
+- AWS VPC networking
 - CIDR and subnet planning
 - Public vs private subnet routing
 - Internet Gateway and NAT Gateway
 - Security groups
-- Load balancing
+- Application Load Balancing
 - Auto Scaling
-- Private database connectivity
+- Launch Templates
 - IAM roles
+- Private database connectivity
 - Systems Manager
-- CloudWatch metrics and logs
+- CloudWatch metrics
+- CloudWatch Logs
+- SNS notifications
 - Infrastructure automation
-- AWS monitoring and alerting
+- Troubleshooting AWS networking and health checks
 
 ---
 
@@ -365,7 +392,6 @@ aws-three-tier-architecture/
 ├── README.md
 │
 ├── architecture/
-│   └── architecture-diagram.png
 │
 └── screenshots/
     ├── vpc/
@@ -392,6 +418,8 @@ aws-three-tier-architecture/
 
 ## Important Note
 
-This project was created for learning and portfolio purposes. Cost-generating resources such as NAT Gateway, Application Load Balancer, EC2, and RDS were removed after testing.
+This project was created for learning and portfolio purposes.
 
-No AWS credentials, passwords, access keys, or private keys are stored in this repository.
+Cost-generating resources such as NAT Gateway, Application Load Balancer, EC2 instances, and RDS were removed after testing.
+
+No AWS credentials, passwords, access keys, database passwords, or private keys are stored in this repository.
