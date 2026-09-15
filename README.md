@@ -4,7 +4,7 @@ A hands-on AWS project demonstrating a secure, scalable, and monitored 3-tier cl
 
 ## Architecture
 
-![AWS 3-Tier Architecture](architecture/architecture-diagram.png)
+![AWS 3-Tier Architecture](architecture/Architecture.png)
 
 ### Request Flow
 
